@@ -1,60 +1,71 @@
-import { Request, Response, NextFunction } from 'express';
-import { ScheduleService } from '../services/schedules.service';
-import { AppError } from '../middleware/error.middleware';
+/* 
+ CRUD API for class timetable records.
+ All times are 24h "HH:MM", days are Sunday–Thursday.
+*/
+import { Request, Response } from 'express';
+import { ScheduleModel } from '../models/Schedule';
 
-export class ScheduleController {
-  static async list(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { course, day, room, instructor } = req.query;
-      const filters = {
-        course: course as string | undefined,
-        day: day as string | undefined,
-        room: room as string | undefined,
-        instructor: instructor as string | undefined,
-      };
-      const schedules = await ScheduleService.list(filters);
-      res.json(schedules);
-    } catch (err) {
-      next(err);
-    }
+
+
+// Returns all schedules, optionally filtered by course, day, room, or instructor.
+// Query params are all optional — omitting them returns everything.
+export const listSchedules = async (req: Request, res: Response) => {
+  const { course, day, room, instructor } = req.query;
+
+  const schedules = await ScheduleModel.findAll({
+    course: course as string | undefined,
+    day: day as string | undefined,
+    room: room as string | undefined,
+    instructor: instructor as string | undefined,
+  });
+
+  res.json(schedules);
+};
+
+
+
+// Returns a single schedule by its ID (e.g. "sch-001").
+export const getSchedule = async (req: Request, res: Response) => {
+  const schedule = await ScheduleModel.findById(req.params.id as string);
+
+  if (!schedule) {
+    return res.status(404).json({ error: 'Schedule not found' });
   }
 
-  static async getById(req: Request, res: Response, next: NextFunction) {
-    try {
-      const schedule = await ScheduleService.getById(req.params.id as string);
-      res.json(schedule);
-    } catch (err) {
-      next(err);
-    }
+  res.json(schedule);
+};
+
+
+
+// Creates a new schedule. Requires: id, course, title, day, start_time, end_time, room.
+// Optional: instructor, section.
+export const createSchedule = async (req: Request, res: Response) => {
+  const schedule = await ScheduleModel.create(req.body);
+  res.status(201).json(schedule);
+};
+
+
+
+// Updates an existing schedule by ID. Only provided fields are changed (PATCH semantics).
+export const updateSchedule = async (req: Request, res: Response) => {
+  const schedule = await ScheduleModel.update(req.params.id as string, req.body);
+
+  if (!schedule) {
+    return res.status(404).json({ error: 'Schedule not found' });
   }
 
-  static async create(req: Request, res: Response, next: NextFunction) {
-    try {
-      const schedule = await ScheduleService.create(req.body);
-      res.status(201).json(schedule);
-    } catch (err) {
-      if ((err as any).code === '23505') {
-        return next(new AppError('Schedule with this ID already exists', 409));
-      }
-      next(err);
-    }
+  res.json(schedule);
+};
+
+
+
+// Deletes a schedule by ID. Returns the deleted record.
+export const deleteSchedule = async (req: Request, res: Response) => {
+  const schedule = await ScheduleModel.delete(req.params.id as string);
+
+  if (!schedule) {
+    return res.status(404).json({ error: 'Schedule not found' });
   }
 
-  static async update(req: Request, res: Response, next: NextFunction) {
-    try {
-      const schedule = await ScheduleService.update(req.params.id as string, req.body);
-      res.json(schedule);
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  static async remove(req: Request, res: Response, next: NextFunction) {
-    try {
-      const schedule = await ScheduleService.delete(req.params.id as string);
-      res.json({ message: 'Schedule deleted', schedule });
-    } catch (err) {
-      next(err);
-    }
-  }
-}
+  res.json({ message: 'Schedule deleted', schedule });
+};

@@ -1,17 +1,28 @@
 import { Router } from 'express';
-import { EventController } from '../controllers/events.controller';
-import { validate } from '../middleware/validation.middleware';
+import { validate, asyncHandler } from '../middleware/validation.middleware';
 import { createEventSchema, updateEventSchema, createRegistrationSchema } from '../validators/event.validator';
+import {
+  listEvents, getEvent, createEvent, updateEvent, deleteEvent,
+  registerForEvent, unregisterFromEvent
+} from '../controllers/events.controller';
 
 const router = Router();
 
-router.get('/', EventController.list);
-router.get('/:id', EventController.getById);
-router.post('/', validate(createEventSchema), EventController.create);
-router.put('/:id', validate(updateEventSchema), EventController.update);
-router.delete('/:id', EventController.remove);
+// GET    /api/events                         — list all (filterable by status, venue, organizer, date)
+// GET    /api/events/:id                     — get one with registrations
+// POST   /api/events                         — create new
+// PUT    /api/events/:id                     — update by ID
+// DELETE /api/events/:id                     — delete by ID (cascades registrations)
+// POST   /api/events/:id/register            — register student (body: student_id, student_name)
+// DELETE /api/events/:id/register/:studentId — unregister student
 
-router.post('/:id/register', validate(createRegistrationSchema), EventController.addRegistration);
-router.delete('/:id/register/:studentId', EventController.removeRegistration);
+router.get('/',          asyncHandler(listEvents));
+router.get('/:id',       asyncHandler(getEvent));
+router.post('/',         validate(createEventSchema),  asyncHandler(createEvent));
+router.put('/:id',       validate(updateEventSchema),  asyncHandler(updateEvent));
+router.delete('/:id',    asyncHandler(deleteEvent));
+
+router.post('/:id/register',            validate(createRegistrationSchema),  asyncHandler(registerForEvent));
+router.delete('/:id/register/:studentId',  asyncHandler(unregisterFromEvent));
 
 export default router;

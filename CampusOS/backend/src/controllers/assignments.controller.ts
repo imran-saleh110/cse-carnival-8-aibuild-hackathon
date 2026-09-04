@@ -1,57 +1,67 @@
-import { Request, Response, NextFunction } from 'express';
-import { AssignmentService } from '../services/assignments.service';
-import { AppError } from '../middleware/error.middleware';
+/* CRUD API for course assignments (homework, labs, papers).*/
 
-export class AssignmentController {
-  static async list(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { course, status } = req.query;
-      const assignments = await AssignmentService.list({
-        course: course as string | undefined,
-        status: status as string | undefined,
-      });
-      res.json(assignments);
-    } catch (err) {
-      next(err);
-    }
+import { Request, Response } from 'express';
+import { AssignmentModel } from '../models/Assignment';
+
+
+// Sorted by deadline ascending by default.
+// Returns all assignments. Filter by course or status (pending/submitted/graded/late).
+export const listAssignments = async (req: Request, res: Response) => {
+  const { course, status } = req.query;
+
+  const assignments = await AssignmentModel.findAll({
+    course: course as string | undefined,
+    status: status as string | undefined,
+  });
+
+  res.json(assignments);
+};
+
+
+
+// Returns a single assignment by ID.
+export const getAssignment = async (req: Request, res: Response) => {
+  const asgn = await AssignmentModel.findById(req.params.id as string);
+
+  if (!asgn) {
+    return res.status(404).json({ error: 'Assignment not found' });
   }
 
-  static async getById(req: Request, res: Response, next: NextFunction) {
-    try {
-      const asgn = await AssignmentService.getById(req.params.id as string);
-      res.json(asgn);
-    } catch (err) {
-      next(err);
-    }
+  res.json(asgn);
+};
+
+
+
+// Creates a new assignment. Requires: id, course, course_title, title,
+// assigned_date, deadline.
+// Optional: description, submission_platform, status (defaults to "pending"), marks.
+export const createAssignment = async (req: Request, res: Response) => {
+  const asgn = await AssignmentModel.create(req.body);
+  res.status(201).json(asgn);
+};
+
+
+
+// Updates an assignment by ID. Only provided fields are changed.
+export const updateAssignment = async (req: Request, res: Response) => {
+  const asgn = await AssignmentModel.update(req.params.id as string, req.body);
+
+  if (!asgn) {
+    return res.status(404).json({ error: 'Assignment not found' });
   }
 
-  static async create(req: Request, res: Response, next: NextFunction) {
-    try {
-      const asgn = await AssignmentService.create(req.body);
-      res.status(201).json(asgn);
-    } catch (err) {
-      if ((err as any).code === '23505') {
-        return next(new AppError('Assignment with this ID already exists', 409));
-      }
-      next(err);
-    }
+  res.json(asgn);
+};
+
+
+
+// Deletes an assignment by ID.
+export const deleteAssignment = async (req: Request, res: Response) => {
+  const asgn = await AssignmentModel.delete(req.params.id as string);
+
+  if (!asgn) {
+    return res.status(404).json({ error: 'Assignment not found' });
   }
 
-  static async update(req: Request, res: Response, next: NextFunction) {
-    try {
-      const asgn = await AssignmentService.update(req.params.id as string, req.body);
-      res.json(asgn);
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  static async remove(req: Request, res: Response, next: NextFunction) {
-    try {
-      const asgn = await AssignmentService.delete(req.params.id as string);
-      res.json({ message: 'Assignment deleted', assignment: asgn });
-    } catch (err) {
-      next(err);
-    }
-  }
-}
+  res.json({ message: 'Assignment deleted', assignment: asgn });
+};

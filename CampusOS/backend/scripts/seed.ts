@@ -113,11 +113,11 @@ async function seedAnnouncements() {
     const status = a.expires < now ? 'expired' : 'active';
 
     await db.query(
-      `INSERT INTO announcements (id, title, body, announcement_date, priority, posted_by, expires_date, status)
+      `INSERT INTO announcements (id, title, body, date, priority, posted_by, expires_date, status)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
        ON CONFLICT (id) DO UPDATE SET
          title=EXCLUDED.title, body=EXCLUDED.body,
-         announcement_date=EXCLUDED.announcement_date, priority=EXCLUDED.priority,
+         date=EXCLUDED.date, priority=EXCLUDED.priority,
          posted_by=EXCLUDED.posted_by, expires_date=EXCLUDED.expires_date,
          status=EXCLUDED.status, updated_at=CURRENT_TIMESTAMP`,
       [a.id, a.title, a.body, a.date, a.priority, a.posted_by, a.expires, status]

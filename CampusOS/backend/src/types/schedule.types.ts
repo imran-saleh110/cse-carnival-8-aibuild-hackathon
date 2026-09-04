@@ -12,6 +12,15 @@ export interface Schedule {
   updated_at: Date;
 }
 
+// Optional query filters for GET /api/schedules
+export interface ScheduleFilters {
+  course?: string;
+  day?: string;
+  room?: string;
+  instructor?: string;
+}
+
+// Body types for POST /api/schedules and PUT /api/schedules/:id
 export interface CreateScheduleInput {
   id: string;
   course: string;
@@ -24,20 +33,4 @@ export interface CreateScheduleInput {
   section?: string;
 }
 
-export interface UpdateScheduleInput {
-  course?: string;
-  title?: string;
-  day?: string;
-  start_time?: string;
-  end_time?: string;
-  room?: string;
-  instructor?: string;
-  section?: string;
-}
-
-export interface ScheduleFilters {
-  course?: string;
-  day?: string;
-  room?: string;
-  instructor?: string;
-}
+export type UpdateScheduleInput = Partial<CreateScheduleInput>;

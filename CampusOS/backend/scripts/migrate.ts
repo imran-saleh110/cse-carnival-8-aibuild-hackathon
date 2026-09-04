@@ -148,7 +148,7 @@ CREATE TABLE IF NOT EXISTS announcements (
   id VARCHAR(50) PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
   body TEXT NOT NULL,
-  announcement_date DATE NOT NULL,
+  date DATE NOT NULL,
   priority VARCHAR(10) DEFAULT 'medium' CHECK (priority IN ('high','medium','low')),
   posted_by VARCHAR(255) NOT NULL,
   expires_date DATE NOT NULL,
@@ -196,6 +196,64 @@ DO $$ BEGIN
       FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
   END IF;
 END $$;
+
+-- ===========
+-- STUDENTS
+-- ===========
+CREATE TABLE IF NOT EXISTS students (
+  student_id VARCHAR(50) PRIMARY KEY,
+  student_name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  phone VARCHAR(20),
+  password VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_students_name ON students(student_name);
+CREATE INDEX IF NOT EXISTS idx_students_email ON students(email);
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_students_updated_at') THEN
+    CREATE TRIGGER update_students_updated_at BEFORE UPDATE ON students
+      FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+  END IF;
+END $$;
+
+-- ===========
+-- COURSES
+-- ===========
+CREATE TABLE IF NOT EXISTS courses (
+  course_code VARCHAR(50) PRIMARY KEY,
+  course_title VARCHAR(255) NOT NULL,
+  department VARCHAR(100),
+  credits INTEGER,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_courses_department ON courses(department);
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_courses_updated_at') THEN
+    CREATE TRIGGER update_courses_updated_at BEFORE UPDATE ON courses
+      FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+  END IF;
+END $$;
+
+-- ===============
+-- REFRESH TOKENS
+-- ===============
+CREATE TABLE IF NOT EXISTS refresh_tokens (
+  id SERIAL PRIMARY KEY,
+  student_id VARCHAR(50) NOT NULL REFERENCES students(student_id) ON DELETE CASCADE,
+  token TEXT NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_student ON refresh_tokens(student_id);
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token   ON refresh_tokens(token);
 `;
 
 async function migrate() {

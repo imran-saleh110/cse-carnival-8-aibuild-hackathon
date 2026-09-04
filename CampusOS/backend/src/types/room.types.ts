@@ -9,11 +9,6 @@ export interface Room {
   updated_at: Date;
 }
 
-export interface RoomEquipment {
-  room_id: string;
-  equipment: string;
-}
-
 export interface RoomBooking {
   booking_id: string;
   room_id: string;
@@ -27,11 +22,19 @@ export interface RoomBooking {
   updated_at: Date;
 }
 
-export interface RoomWithDetails extends Room {
-  equipment: string[];
-  bookings: RoomBooking[];
+// A room as returned by the API: base fields + equipment array + bookings
+export type RoomWithDetails = Room & { equipment: string[]; bookings: RoomBooking[] };
+
+// Optional query filters for GET /api/rooms
+export interface RoomFilters {
+  type?: string;
+  status?: string;
+  min_capacity?: number;
+  equipment?: string;
+  floor?: number;
 }
 
+// Body types for POST/PUT /api/rooms
 export interface CreateRoomInput {
   id: string;
   room_number: string;
@@ -42,23 +45,9 @@ export interface CreateRoomInput {
   equipment?: string[];
 }
 
-export interface UpdateRoomInput {
-  room_number?: string;
-  type?: string;
-  capacity?: number;
-  floor?: number;
-  status?: string;
-  equipment?: string[];
-}
+export type UpdateRoomInput = Partial<Omit<CreateRoomInput, 'id'>>;
 
-export interface RoomFilters {
-  type?: string;
-  status?: string;
-  min_capacity?: number;
-  equipment?: string;
-  floor?: number;
-}
-
+// Body types for /api/rooms/bookings
 export interface CreateBookingInput {
   booking_id: string;
   room_id: string;
