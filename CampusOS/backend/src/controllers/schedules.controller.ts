@@ -21,7 +21,7 @@ export class ScheduleController {
 
   static async getById(req: Request, res: Response, next: NextFunction) {
     try {
-      const schedule = await ScheduleService.getById(req.params.id);
+      const schedule = await ScheduleService.getById(req.params.id as string);
       res.json(schedule);
     } catch (err) {
       next(err);
@@ -42,7 +42,7 @@ export class ScheduleController {
 
   static async update(req: Request, res: Response, next: NextFunction) {
     try {
-      const schedule = await ScheduleService.update(req.params.id, req.body);
+      const schedule = await ScheduleService.update(req.params.id as string, req.body);
       res.json(schedule);
     } catch (err) {
       next(err);
@@ -51,7 +51,7 @@ export class ScheduleController {
 
   static async remove(req: Request, res: Response, next: NextFunction) {
     try {
-      const schedule = await ScheduleService.delete(req.params.id);
+      const schedule = await ScheduleService.delete(req.params.id as string);
       res.json({ message: 'Schedule deleted', schedule });
     } catch (err) {
       next(err);
